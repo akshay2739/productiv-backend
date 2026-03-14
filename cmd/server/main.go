@@ -10,8 +10,7 @@ import (
 
 	"github.com/akshay/productiv-backend/config"
 	"github.com/akshay/productiv-backend/internal/handler"
-	"github.com/akshay/productiv-backend/internal/middleware"
-	"github.com/akshay/productiv-backend/internal/repository/postgres"
+"github.com/akshay/productiv-backend/internal/repository/postgres"
 	"github.com/akshay/productiv-backend/internal/service"
 )
 
@@ -52,11 +51,7 @@ func main() {
 	retentionHandler := handler.NewRetentionHandler(retentionSvc)
 
 	// Setup router
-	router := handler.NewRouter(dashboardHandler, fastingHandler, gymHandler, meditationHandler, retentionHandler)
-
-	// Apply global middleware
-	router.Use(middleware.CORS(cfg.CORSOrigin))
-	router.Use(middleware.Logging)
+	router := handler.NewRouter(dashboardHandler, fastingHandler, gymHandler, meditationHandler, retentionHandler, cfg.CORSOrigin)
 
 	// Start server
 	srv := &http.Server{

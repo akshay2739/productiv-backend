@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/akshay/productiv-backend/internal/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -13,8 +14,13 @@ func NewRouter(
 	gym *GymHandler,
 	meditation *MeditationHandler,
 	retention *RetentionHandler,
+	corsOrigin string,
 ) *chi.Mux {
 	r := chi.NewRouter()
+
+	// Middleware must be registered before routes
+	r.Use(middleware.CORS(corsOrigin))
+	r.Use(middleware.Logging)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Dashboard

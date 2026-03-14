@@ -4,7 +4,7 @@ import "time"
 
 // MeditationDurationOptions returns the available duration goals in minutes.
 func MeditationDurationOptions() []int {
-	return []int{5, 10, 15, 20}
+	return []int{5, 10, 15, 20, 30, 45, 60}
 }
 
 // MeditationSession represents a single meditation session.

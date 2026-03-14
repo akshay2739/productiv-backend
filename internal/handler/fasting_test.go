@@ -24,7 +24,7 @@ func TestFastingHandler_GetStats_Success(t *testing.T) {
 		LongestStreak:   5,
 		AverageDuration: 16.5,
 		TotalFasts:      10,
-		CalendarDays:    []domain.CalendarDay{{Date: "2026-03-14", HasActivity: true, IsToday: true}},
+		CalendarDays:    []domain.FastingCalendarDay{{Date: "2026-03-14", HasActivity: true, IsToday: true}},
 	}
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(expected, nil)
 

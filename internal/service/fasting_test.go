@@ -145,13 +145,14 @@ func TestFastingService_GetStats_Success(t *testing.T) {
 	fastingRepo.On("HasCompletedOnDate", mock.Anything, int64(1), mock.AnythingOfType("time.Time")).Return(false, nil)
 	fastingRepo.On("CountCompleted", mock.Anything, int64(1)).Return(5, nil)
 	fastingRepo.On("AverageDuration", mock.Anything, int64(1)).Return(16.5, nil)
+	fastingRepo.On("GetCompletedDurationsForMonth", mock.Anything, int64(1), mock.AnythingOfType("int"), mock.AnythingOfType("time.Month"), mock.Anything).Return(map[string]float64{}, nil)
 
 	stats, err := svc.GetStats(context.Background(), 1)
 
 	require.NoError(t, err)
 	assert.Equal(t, 5, stats.TotalFasts)
 	assert.Equal(t, 16.5, stats.AverageDuration)
-	assert.Len(t, stats.CalendarDays, 14)
+	assert.True(t, len(stats.CalendarDays) >= 28) // full month calendar
 	assert.Nil(t, stats.ActiveSession)
 	userRepo.AssertExpectations(t)
 }
@@ -165,6 +166,7 @@ func TestFastingService_GetStats_WithActiveSession(t *testing.T) {
 	fastingRepo.On("HasCompletedOnDate", mock.Anything, int64(1), mock.AnythingOfType("time.Time")).Return(false, nil)
 	fastingRepo.On("CountCompleted", mock.Anything, int64(1)).Return(0, nil)
 	fastingRepo.On("AverageDuration", mock.Anything, int64(1)).Return(0.0, nil)
+	fastingRepo.On("GetCompletedDurationsForMonth", mock.Anything, int64(1), mock.AnythingOfType("int"), mock.AnythingOfType("time.Month"), mock.Anything).Return(map[string]float64{}, nil)
 
 	stats, err := svc.GetStats(context.Background(), 1)
 

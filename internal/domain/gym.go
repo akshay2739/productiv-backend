@@ -32,6 +32,21 @@ func IsValidWorkoutType(wt WorkoutType) bool {
 	return false
 }
 
+// ValidDurationOptions returns all valid workout duration options in minutes.
+func ValidDurationOptions() []int {
+	return []int{30, 45, 60, 90, 120}
+}
+
+// IsValidDurationMin checks if a workout duration is valid.
+func IsValidDurationMin(d int) bool {
+	for _, valid := range ValidDurationOptions() {
+		if valid == d {
+			return true
+		}
+	}
+	return false
+}
+
 // GymSession represents a single gym workout log.
 type GymSession struct {
 	ID          int64       `json:"id" gorm:"primaryKey"`

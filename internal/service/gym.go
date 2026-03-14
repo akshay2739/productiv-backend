@@ -33,6 +33,10 @@ func (s *GymService) LogWorkout(ctx context.Context, userID int64, req LogWorkou
 		return nil, domain.ErrInvalidWorkoutType
 	}
 
+	if req.DurationMin != nil && !domain.IsValidDurationMin(*req.DurationMin) {
+		return nil, domain.ErrInvalidDuration
+	}
+
 	if req.EnergyLevel != nil && (*req.EnergyLevel < 1 || *req.EnergyLevel > 5) {
 		return nil, domain.ErrInvalidEnergyLevel
 	}

@@ -1,0 +1,55 @@
+package domain
+
+import "time"
+
+// WorkoutType defines the kind of workout.
+type WorkoutType string
+
+const (
+	WorkoutStrength WorkoutType = "strength"
+	WorkoutCardio   WorkoutType = "cardio"
+	WorkoutHIIT     WorkoutType = "hiit"
+	WorkoutYoga     WorkoutType = "yoga"
+	WorkoutSports   WorkoutType = "sports"
+	WorkoutSwimming WorkoutType = "swimming"
+)
+
+// ValidWorkoutTypes returns all valid workout types.
+func ValidWorkoutTypes() []WorkoutType {
+	return []WorkoutType{
+		WorkoutStrength, WorkoutCardio, WorkoutHIIT,
+		WorkoutYoga, WorkoutSports, WorkoutSwimming,
+	}
+}
+
+// IsValidWorkoutType checks if a workout type is valid.
+func IsValidWorkoutType(wt WorkoutType) bool {
+	for _, valid := range ValidWorkoutTypes() {
+		if valid == wt {
+			return true
+		}
+	}
+	return false
+}
+
+// GymSession represents a single gym workout log.
+type GymSession struct {
+	ID          int64       `json:"id"`
+	UserID      int64       `json:"user_id"`
+	WorkoutType WorkoutType `json:"workout_type"`
+	DurationMin *int        `json:"duration_min,omitempty"`
+	EnergyLevel *int        `json:"energy_level,omitempty"`
+	LoggedAt    time.Time   `json:"logged_at"`
+	CreatedAt   time.Time   `json:"created_at"`
+}
+
+// GymStats holds aggregated gym statistics.
+type GymStats struct {
+	CurrentStreak  int           `json:"current_streak"`
+	LongestStreak  int           `json:"longest_streak"`
+	WorkoutsWeek   int           `json:"workouts_this_week"`
+	WorkoutsMonth  int           `json:"workouts_this_month"`
+	WeeklyGoal     int           `json:"weekly_goal"`
+	CalendarDays   []CalendarDay `json:"calendar_days"`
+	LoggedToday    bool          `json:"logged_today"`
+}

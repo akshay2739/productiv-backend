@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/akshay/productiv-backend/internal/domain"
+	"github.com/akshay/productiv-backend/internal/handler"
 	"github.com/akshay/productiv-backend/internal/service"
 	svcmocks "github.com/akshay/productiv-backend/internal/service/mocks"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ func TestGymHandler_GetStats_Success(t *testing.T) {
 	}
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(expected, nil)
 
-	h := NewGymHandler(mockSvc)
+	h := handler.NewGymHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/gym/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -46,7 +47,7 @@ func TestGymHandler_GetStats_ServiceError(t *testing.T) {
 	mockSvc := new(svcmocks.MockGymService)
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(nil, domain.ErrNotFound)
 
-	h := NewGymHandler(mockSvc)
+	h := handler.NewGymHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/gym/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -63,7 +64,7 @@ func TestGymHandler_LogWorkout_Success(t *testing.T) {
 	}
 	mockSvc.On("LogWorkout", mock.Anything, int64(1), service.LogWorkoutRequest{WorkoutType: "strength"}).Return(expected, nil)
 
-	h := NewGymHandler(mockSvc)
+	h := handler.NewGymHandler(mockSvc)
 	body, _ := json.Marshal(map[string]string{"workout_type": "strength"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/gym/log", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -79,7 +80,8 @@ func TestGymHandler_LogWorkout_Success(t *testing.T) {
 }
 
 func TestGymHandler_LogWorkout_BadJSON(t *testing.T) {
-	h := NewGymHandler(nil)
+	mockSvc := new(svcmocks.MockGymService)
+	h := handler.NewGymHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/gym/log", bytes.NewReader([]byte("{invalid")))
 	w := httptest.NewRecorder()
 	h.LogWorkout(w, req)
@@ -91,7 +93,7 @@ func TestGymHandler_LogWorkout_Conflict(t *testing.T) {
 	mockSvc := new(svcmocks.MockGymService)
 	mockSvc.On("LogWorkout", mock.Anything, int64(1), mock.Anything).Return(nil, domain.ErrAlreadyLoggedToday)
 
-	h := NewGymHandler(mockSvc)
+	h := handler.NewGymHandler(mockSvc)
 	body, _ := json.Marshal(map[string]string{"workout_type": "cardio"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/gym/log", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -100,7 +102,7 @@ func TestGymHandler_LogWorkout_Conflict(t *testing.T) {
 
 	assert.Equal(t, http.StatusConflict, w.Code)
 
-	var got ErrorResponse
+	var got handler.ErrorResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 	assert.Equal(t, "conflict", got.Error)
 }
@@ -109,7 +111,7 @@ func TestGymHandler_LogWorkout_ValidationError(t *testing.T) {
 	mockSvc := new(svcmocks.MockGymService)
 	mockSvc.On("LogWorkout", mock.Anything, int64(1), mock.Anything).Return(nil, domain.ErrInvalidWorkoutType)
 
-	h := NewGymHandler(mockSvc)
+	h := handler.NewGymHandler(mockSvc)
 	body, _ := json.Marshal(map[string]string{"workout_type": "boxing"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/gym/log", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")

@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akshay/productiv-backend/internal/domain"
+	"github.com/akshay/productiv-backend/internal/handler"
 	"github.com/akshay/productiv-backend/internal/service"
 	svcmocks "github.com/akshay/productiv-backend/internal/service/mocks"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ func TestFastingHandler_GetStats_Success(t *testing.T) {
 	}
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(expected, nil)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/fasting/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -46,7 +47,7 @@ func TestFastingHandler_GetStats_ServiceError(t *testing.T) {
 	mockSvc := new(svcmocks.MockFastingService)
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(nil, domain.ErrNotFound)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/fasting/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -65,7 +66,7 @@ func TestFastingHandler_StartFast_Success(t *testing.T) {
 	}
 	mockSvc.On("StartFast", mock.Anything, int64(1), service.StartFastRequest{Protocol: "16:8"}).Return(expected, nil)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	body, _ := json.Marshal(map[string]string{"protocol": "16:8"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/fasting/start", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -81,7 +82,8 @@ func TestFastingHandler_StartFast_Success(t *testing.T) {
 }
 
 func TestFastingHandler_StartFast_BadJSON(t *testing.T) {
-	h := NewFastingHandler(nil)
+	mockSvc := new(svcmocks.MockFastingService)
+	h := handler.NewFastingHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/fasting/start", bytes.NewReader([]byte("not json")))
 	w := httptest.NewRecorder()
 	h.StartFast(w, req)
@@ -93,7 +95,7 @@ func TestFastingHandler_StartFast_Conflict(t *testing.T) {
 	mockSvc := new(svcmocks.MockFastingService)
 	mockSvc.On("StartFast", mock.Anything, int64(1), mock.Anything).Return(nil, domain.ErrActiveFastExists)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	body, _ := json.Marshal(map[string]string{"protocol": "16:8"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/fasting/start", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -102,7 +104,7 @@ func TestFastingHandler_StartFast_Conflict(t *testing.T) {
 
 	assert.Equal(t, http.StatusConflict, w.Code)
 
-	var got ErrorResponse
+	var got handler.ErrorResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 	assert.Equal(t, "conflict", got.Error)
 }
@@ -111,7 +113,7 @@ func TestFastingHandler_StartFast_ValidationError(t *testing.T) {
 	mockSvc := new(svcmocks.MockFastingService)
 	mockSvc.On("StartFast", mock.Anything, int64(1), mock.Anything).Return(nil, domain.ErrInvalidDuration)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	body, _ := json.Marshal(map[string]string{"protocol": "bad"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/fasting/start", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -134,7 +136,7 @@ func TestFastingHandler_EndFast_Success(t *testing.T) {
 	}
 	mockSvc.On("EndFast", mock.Anything, int64(1)).Return(expected, nil)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/fasting/end", nil)
 	w := httptest.NewRecorder()
 	h.EndFast(w, req)
@@ -147,7 +149,7 @@ func TestFastingHandler_EndFast_NoActiveFast(t *testing.T) {
 	mockSvc := new(svcmocks.MockFastingService)
 	mockSvc.On("EndFast", mock.Anything, int64(1)).Return(nil, domain.ErrNoActiveFast)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/fasting/end", nil)
 	w := httptest.NewRecorder()
 	h.EndFast(w, req)
@@ -160,7 +162,7 @@ func TestFastingHandler_GetProtocols_Success(t *testing.T) {
 	protocols := domain.AvailableFastingProtocols()
 	mockSvc.On("GetProtocols").Return(protocols)
 
-	h := NewFastingHandler(mockSvc)
+	h := handler.NewFastingHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/fasting/protocols", nil)
 	w := httptest.NewRecorder()
 	h.GetProtocols(w, req)

@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/akshay/productiv-backend/internal/domain"
+	"github.com/akshay/productiv-backend/internal/handler"
 	svcmocks "github.com/akshay/productiv-backend/internal/service/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,7 +27,7 @@ func TestDashboardHandler_GetDashboard_Success(t *testing.T) {
 	}
 	mockSvc.On("GetDashboard", mock.Anything, int64(1)).Return(expected, nil)
 
-	h := NewDashboardHandler(mockSvc)
+	h := handler.NewDashboardHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard", nil)
 	w := httptest.NewRecorder()
 	h.GetDashboard(w, req)
@@ -45,14 +46,14 @@ func TestDashboardHandler_GetDashboard_ServiceError(t *testing.T) {
 	mockSvc := new(svcmocks.MockDashboardService)
 	mockSvc.On("GetDashboard", mock.Anything, int64(1)).Return(nil, errors.New("unexpected error"))
 
-	h := NewDashboardHandler(mockSvc)
+	h := handler.NewDashboardHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard", nil)
 	w := httptest.NewRecorder()
 	h.GetDashboard(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-	var got ErrorResponse
+	var got handler.ErrorResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 	assert.Equal(t, "internal_error", got.Error)
 }

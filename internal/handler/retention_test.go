@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akshay/productiv-backend/internal/domain"
+	"github.com/akshay/productiv-backend/internal/handler"
 	"github.com/akshay/productiv-backend/internal/service"
 	svcmocks "github.com/akshay/productiv-backend/internal/service/mocks"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,7 @@ func TestRetentionHandler_GetStats_Success(t *testing.T) {
 	}
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(expected, nil)
 
-	h := NewRetentionHandler(mockSvc)
+	h := handler.NewRetentionHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/retention/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -53,7 +54,7 @@ func TestRetentionHandler_GetStats_ServiceError(t *testing.T) {
 	mockSvc := new(svcmocks.MockRetentionService)
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(nil, domain.ErrNotFound)
 
-	h := NewRetentionHandler(mockSvc)
+	h := handler.NewRetentionHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/retention/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -70,7 +71,7 @@ func TestRetentionHandler_StartTracking_Success(t *testing.T) {
 	}
 	mockSvc.On("StartTracking", mock.Anything, int64(1)).Return(expected, nil)
 
-	h := NewRetentionHandler(mockSvc)
+	h := handler.NewRetentionHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/retention/start", nil)
 	w := httptest.NewRecorder()
 	h.StartTracking(w, req)
@@ -87,7 +88,7 @@ func TestRetentionHandler_StartTracking_Conflict(t *testing.T) {
 	mockSvc := new(svcmocks.MockRetentionService)
 	mockSvc.On("StartTracking", mock.Anything, int64(1)).Return(nil, domain.ErrActiveStreakExists)
 
-	h := NewRetentionHandler(mockSvc)
+	h := handler.NewRetentionHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/retention/start", nil)
 	w := httptest.NewRecorder()
 	h.StartTracking(w, req)
@@ -107,7 +108,7 @@ func TestRetentionHandler_ResetCounter_Success(t *testing.T) {
 	}
 	mockSvc.On("ResetCounter", mock.Anything, int64(1), service.ResetRequest{Reason: &reason}).Return(expected, nil)
 
-	h := NewRetentionHandler(mockSvc)
+	h := handler.NewRetentionHandler(mockSvc)
 	body, _ := json.Marshal(map[string]string{"reason": "testing"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/retention/reset", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -129,7 +130,7 @@ func TestRetentionHandler_ResetCounter_EmptyBody(t *testing.T) {
 	expected := &domain.RetentionStreak{ID: 1, EndDate: &now, DaysCount: 5}
 	mockSvc.On("ResetCounter", mock.Anything, int64(1), service.ResetRequest{}).Return(expected, nil)
 
-	h := NewRetentionHandler(mockSvc)
+	h := handler.NewRetentionHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/retention/reset", nil)
 	w := httptest.NewRecorder()
 	h.ResetCounter(w, req)
@@ -142,7 +143,7 @@ func TestRetentionHandler_ResetCounter_NoActiveStreak(t *testing.T) {
 	mockSvc := new(svcmocks.MockRetentionService)
 	mockSvc.On("ResetCounter", mock.Anything, int64(1), mock.Anything).Return(nil, domain.ErrNoActiveStreak)
 
-	h := NewRetentionHandler(mockSvc)
+	h := handler.NewRetentionHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/retention/reset", nil)
 	w := httptest.NewRecorder()
 	h.ResetCounter(w, req)

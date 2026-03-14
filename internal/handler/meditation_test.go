@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akshay/productiv-backend/internal/domain"
+	"github.com/akshay/productiv-backend/internal/handler"
 	"github.com/akshay/productiv-backend/internal/service"
 	svcmocks "github.com/akshay/productiv-backend/internal/service/mocks"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func TestMeditationHandler_GetStats_Success(t *testing.T) {
 	}
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(expected, nil)
 
-	h := NewMeditationHandler(mockSvc)
+	h := handler.NewMeditationHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/meditation/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -45,7 +46,7 @@ func TestMeditationHandler_GetStats_ServiceError(t *testing.T) {
 	mockSvc := new(svcmocks.MockMeditationService)
 	mockSvc.On("GetStats", mock.Anything, int64(1)).Return(nil, domain.ErrNotFound)
 
-	h := NewMeditationHandler(mockSvc)
+	h := handler.NewMeditationHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/meditation/stats", nil)
 	w := httptest.NewRecorder()
 	h.GetStats(w, req)
@@ -68,7 +69,7 @@ func TestMeditationHandler_StartSession_Success(t *testing.T) {
 		MoodBefore:    &mood,
 	}).Return(expected, nil)
 
-	h := NewMeditationHandler(mockSvc)
+	h := handler.NewMeditationHandler(mockSvc)
 	body, _ := json.Marshal(map[string]interface{}{"target_minutes": 10, "mood_before": 3})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/meditation/start", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -84,7 +85,8 @@ func TestMeditationHandler_StartSession_Success(t *testing.T) {
 }
 
 func TestMeditationHandler_StartSession_BadJSON(t *testing.T) {
-	h := NewMeditationHandler(nil)
+	mockSvc := new(svcmocks.MockMeditationService)
+	h := handler.NewMeditationHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/meditation/start", bytes.NewReader([]byte("bad")))
 	w := httptest.NewRecorder()
 	h.StartSession(w, req)
@@ -96,7 +98,7 @@ func TestMeditationHandler_StartSession_Conflict(t *testing.T) {
 	mockSvc := new(svcmocks.MockMeditationService)
 	mockSvc.On("StartSession", mock.Anything, int64(1), mock.Anything).Return(nil, domain.ErrActiveSessionExists)
 
-	h := NewMeditationHandler(mockSvc)
+	h := handler.NewMeditationHandler(mockSvc)
 	body, _ := json.Marshal(map[string]interface{}{"target_minutes": 10})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/meditation/start", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -119,7 +121,7 @@ func TestMeditationHandler_EndSession_Success(t *testing.T) {
 	}
 	mockSvc.On("EndSession", mock.Anything, int64(1), service.EndSessionRequest{MoodAfter: &mood}).Return(expected, nil)
 
-	h := NewMeditationHandler(mockSvc)
+	h := handler.NewMeditationHandler(mockSvc)
 	body, _ := json.Marshal(map[string]interface{}{"mood_after": 5})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/meditation/end", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -141,7 +143,7 @@ func TestMeditationHandler_EndSession_EmptyBody(t *testing.T) {
 	}
 	mockSvc.On("EndSession", mock.Anything, int64(1), service.EndSessionRequest{}).Return(expected, nil)
 
-	h := NewMeditationHandler(mockSvc)
+	h := handler.NewMeditationHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/meditation/end", nil)
 	w := httptest.NewRecorder()
 	h.EndSession(w, req)
@@ -154,7 +156,7 @@ func TestMeditationHandler_EndSession_NoActiveSession(t *testing.T) {
 	mockSvc := new(svcmocks.MockMeditationService)
 	mockSvc.On("EndSession", mock.Anything, int64(1), mock.Anything).Return(nil, domain.ErrNoActiveSession)
 
-	h := NewMeditationHandler(mockSvc)
+	h := handler.NewMeditationHandler(mockSvc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/meditation/end", nil)
 	w := httptest.NewRecorder()
 	h.EndSession(w, req)

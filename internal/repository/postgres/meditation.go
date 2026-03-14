@@ -6,29 +6,22 @@ import (
 	"time"
 
 	"github.com/akshay/productiv-backend/internal/domain"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/gorm"
 )
 
-// MeditationRepo implements repository.MeditationRepository using PostgreSQL.
+// MeditationRepo implements repository.MeditationRepository using GORM.
 type MeditationRepo struct {
-	pool *pgxpool.Pool
+	db *gorm.DB
 }
 
 // NewMeditationRepo creates a new MeditationRepo.
-func NewMeditationRepo(pool *pgxpool.Pool) *MeditationRepo {
-	return &MeditationRepo{pool: pool}
+func NewMeditationRepo(db *gorm.DB) *MeditationRepo {
+	return &MeditationRepo{db: db}
 }
 
 // Create inserts a new meditation session.
 func (r *MeditationRepo) Create(ctx context.Context, session *domain.MeditationSession) error {
-	err := r.pool.QueryRow(ctx,
-		`INSERT INTO meditation_sessions (user_id, target_minutes, start_time, mood_before)
-		 VALUES ($1, $2, $3, $4)
-		 RETURNING id, created_at`,
-		session.UserID, session.TargetMinutes, session.StartTime, session.MoodBefore,
-	).Scan(&session.ID, &session.CreatedAt)
-	if err != nil {
+	if err := r.db.WithContext(ctx).Create(session).Error; err != nil {
 		return fmt.Errorf("creating meditation session: %w", err)
 	}
 	return nil
@@ -36,30 +29,30 @@ func (r *MeditationRepo) Create(ctx context.Context, session *domain.MeditationS
 
 // GetActive returns the currently active meditation session for a user, or nil if none.
 func (r *MeditationRepo) GetActive(ctx context.Context, userID int64) (*domain.MeditationSession, error) {
-	var s domain.MeditationSession
-	err := r.pool.QueryRow(ctx,
-		`SELECT id, user_id, target_minutes, start_time, end_time, actual_duration_minutes, mood_before, mood_after, created_at
-		 FROM meditation_sessions
-		 WHERE user_id = $1 AND end_time IS NULL
-		 ORDER BY start_time DESC LIMIT 1`, userID,
-	).Scan(&s.ID, &s.UserID, &s.TargetMinutes, &s.StartTime, &s.EndTime,
-		&s.ActualDuration, &s.MoodBefore, &s.MoodAfter, &s.CreatedAt)
-	if err == pgx.ErrNoRows {
+	var session domain.MeditationSession
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND end_time IS NULL", userID).
+		Order("start_time DESC").
+		First(&session).Error
+	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("getting active meditation session: %w", err)
 	}
-	return &s, nil
+	return &session, nil
 }
 
 // EndSession marks a meditation session as complete.
 func (r *MeditationRepo) EndSession(ctx context.Context, id int64, endTime time.Time, actualDuration float64, moodAfter *int) error {
-	_, err := r.pool.Exec(ctx,
-		`UPDATE meditation_sessions
-		 SET end_time = $2, actual_duration_minutes = $3, mood_after = $4
-		 WHERE id = $1`,
-		id, endTime, actualDuration, moodAfter)
+	err := r.db.WithContext(ctx).
+		Model(&domain.MeditationSession{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"end_time":                endTime,
+			"actual_duration_minutes": actualDuration,
+			"mood_after":              moodAfter,
+		}).Error
 	if err != nil {
 		return fmt.Errorf("ending meditation session: %w", err)
 	}
@@ -68,68 +61,62 @@ func (r *MeditationRepo) EndSession(ctx context.Context, id int64, endTime time.
 
 // GetCompletedByDateRange returns completed meditation sessions within a date range.
 func (r *MeditationRepo) GetCompletedByDateRange(ctx context.Context, userID int64, start, end time.Time) ([]domain.MeditationSession, error) {
-	rows, err := r.pool.Query(ctx,
-		`SELECT id, user_id, target_minutes, start_time, end_time, actual_duration_minutes, mood_before, mood_after, created_at
-		 FROM meditation_sessions
-		 WHERE user_id = $1 AND end_time IS NOT NULL AND start_time >= $2 AND start_time < $3
-		 ORDER BY start_time DESC`, userID, start, end)
+	var sessions []domain.MeditationSession
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND end_time IS NOT NULL AND start_time >= ? AND start_time < ?", userID, start, end).
+		Order("start_time DESC").
+		Find(&sessions).Error
 	if err != nil {
 		return nil, fmt.Errorf("getting completed meditation sessions: %w", err)
 	}
-	defer rows.Close()
-
-	var sessions []domain.MeditationSession
-	for rows.Next() {
-		var s domain.MeditationSession
-		if err := rows.Scan(&s.ID, &s.UserID, &s.TargetMinutes, &s.StartTime, &s.EndTime,
-			&s.ActualDuration, &s.MoodBefore, &s.MoodAfter, &s.CreatedAt); err != nil {
-			return nil, fmt.Errorf("scanning meditation session: %w", err)
-		}
-		sessions = append(sessions, s)
-	}
-	return sessions, rows.Err()
+	return sessions, nil
 }
 
 // TotalMinutes returns the total minutes meditated for a user.
 func (r *MeditationRepo) TotalMinutes(ctx context.Context, userID int64) (float64, error) {
-	var total *float64
-	err := r.pool.QueryRow(ctx,
-		`SELECT SUM(actual_duration_minutes) FROM meditation_sessions WHERE user_id = $1 AND end_time IS NOT NULL`, userID,
-	).Scan(&total)
+	var result struct{ Total *float64 }
+	err := r.db.WithContext(ctx).
+		Model(&domain.MeditationSession{}).
+		Select("SUM(actual_duration_minutes) as total").
+		Where("user_id = ? AND end_time IS NOT NULL", userID).
+		Scan(&result).Error
 	if err != nil {
 		return 0, fmt.Errorf("totaling meditation minutes: %w", err)
 	}
-	if total == nil {
+	if result.Total == nil {
 		return 0, nil
 	}
-	return *total, nil
+	return *result.Total, nil
 }
 
 // CountCompleted returns the total number of completed meditation sessions.
 func (r *MeditationRepo) CountCompleted(ctx context.Context, userID int64) (int, error) {
-	var count int
-	err := r.pool.QueryRow(ctx,
-		`SELECT COUNT(*) FROM meditation_sessions WHERE user_id = $1 AND end_time IS NOT NULL`, userID,
-	).Scan(&count)
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.MeditationSession{}).
+		Where("user_id = ? AND end_time IS NOT NULL", userID).
+		Count(&count).Error
 	if err != nil {
 		return 0, fmt.Errorf("counting completed meditations: %w", err)
 	}
-	return count, nil
+	return int(count), nil
 }
 
 // AverageDuration returns the average session length in minutes.
 func (r *MeditationRepo) AverageDuration(ctx context.Context, userID int64) (float64, error) {
-	var avg *float64
-	err := r.pool.QueryRow(ctx,
-		`SELECT AVG(actual_duration_minutes) FROM meditation_sessions WHERE user_id = $1 AND end_time IS NOT NULL`, userID,
-	).Scan(&avg)
+	var result struct{ Avg *float64 }
+	err := r.db.WithContext(ctx).
+		Model(&domain.MeditationSession{}).
+		Select("AVG(actual_duration_minutes) as avg").
+		Where("user_id = ? AND end_time IS NOT NULL", userID).
+		Scan(&result).Error
 	if err != nil {
 		return 0, fmt.Errorf("averaging meditation duration: %w", err)
 	}
-	if avg == nil {
+	if result.Avg == nil {
 		return 0, nil
 	}
-	return *avg, nil
+	return *result.Avg, nil
 }
 
 // HasCompletedOnDate checks if a completed meditation exists on a given date.
@@ -137,15 +124,13 @@ func (r *MeditationRepo) HasCompletedOnDate(ctx context.Context, userID int64, d
 	dayStart := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	dayEnd := dayStart.Add(24 * time.Hour)
 
-	var exists bool
-	err := r.pool.QueryRow(ctx,
-		`SELECT EXISTS(
-			SELECT 1 FROM meditation_sessions
-			WHERE user_id = $1 AND end_time IS NOT NULL AND end_time >= $2 AND end_time < $3
-		)`, userID, dayStart, dayEnd,
-	).Scan(&exists)
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&domain.MeditationSession{}).
+		Where("user_id = ? AND end_time IS NOT NULL AND end_time >= ? AND end_time < ?", userID, dayStart, dayEnd).
+		Count(&count).Error
 	if err != nil {
 		return false, fmt.Errorf("checking meditation on date: %w", err)
 	}
-	return exists, nil
+	return count > 0, nil
 }

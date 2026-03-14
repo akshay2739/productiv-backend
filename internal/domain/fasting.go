@@ -22,14 +22,14 @@ func AvailableFastingProtocols() []FastingProtocol {
 
 // FastingSession represents a single fasting session.
 type FastingSession struct {
-	ID             int64      `json:"id"`
-	UserID         int64      `json:"user_id"`
+	ID             int64      `json:"id" gorm:"primaryKey"`
+	UserID         int64      `json:"user_id" gorm:"index"`
 	Protocol       string     `json:"protocol"`
 	TargetHours    int        `json:"target_hours"`
-	StartTime      time.Time  `json:"start_time"`
+	StartTime      time.Time  `json:"start_time" gorm:"index"`
 	EndTime        *time.Time `json:"end_time,omitempty"`
-	ActualDuration *float64   `json:"actual_duration_hours,omitempty"`
-	TargetReached  bool       `json:"target_reached"`
+	ActualDuration *float64   `json:"actual_duration_hours,omitempty" gorm:"column:actual_duration_hours"`
+	TargetReached  bool       `json:"target_reached" gorm:"default:false"`
 	CreatedAt      time.Time  `json:"created_at"`
 }
 
@@ -40,17 +40,17 @@ func (f *FastingSession) IsActive() bool {
 
 // FastingStats holds aggregated fasting statistics.
 type FastingStats struct {
-	CurrentStreak    int            `json:"current_streak"`
-	LongestStreak    int            `json:"longest_streak"`
-	AverageDuration  float64        `json:"average_duration_hours"`
-	TotalFasts       int            `json:"total_fasts"`
-	CalendarDays     []CalendarDay  `json:"calendar_days"`
-	ActiveSession    *FastingSession `json:"active_session,omitempty"`
+	CurrentStreak   int             `json:"current_streak"`
+	LongestStreak   int             `json:"longest_streak"`
+	AverageDuration float64         `json:"average_duration_hours"`
+	TotalFasts      int             `json:"total_fasts"`
+	CalendarDays    []CalendarDay   `json:"calendar_days"`
+	ActiveSession   *FastingSession `json:"active_session,omitempty"`
 }
 
 // CalendarDay represents a single day in the 14-day calendar view.
 type CalendarDay struct {
-	Date      string `json:"date"`
-	HasActivity bool `json:"has_activity"`
-	IsToday   bool   `json:"is_today"`
+	Date        string `json:"date"`
+	HasActivity bool   `json:"has_activity"`
+	IsToday     bool   `json:"is_today"`
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"os"
@@ -19,24 +18,24 @@ import (
 func main() {
 	cfg := config.Load()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	pool, err := postgres.NewPool(ctx, cfg.DBConnString())
+	db, err := postgres.NewDB(cfg.DBConnString())
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	defer pool.Close()
+
+	if err := postgres.Seed(db); err != nil {
+		log.Fatalf("failed to seed database: %v", err)
+	}
 
 	log.Println("connected to database")
 
 	// Initialize repositories
-	userRepo := postgres.NewUserRepo(pool)
-	pillarRepo := postgres.NewPillarRepo(pool)
-	fastingRepo := postgres.NewFastingRepo(pool)
-	gymRepo := postgres.NewGymRepo(pool)
-	meditationRepo := postgres.NewMeditationRepo(pool)
-	retentionRepo := postgres.NewRetentionRepo(pool)
+	userRepo := postgres.NewUserRepo(db)
+	pillarRepo := postgres.NewPillarRepo(db)
+	fastingRepo := postgres.NewFastingRepo(db)
+	gymRepo := postgres.NewGymRepo(db)
+	meditationRepo := postgres.NewMeditationRepo(db)
+	retentionRepo := postgres.NewRetentionRepo(db)
 
 	// Initialize services
 	fastingSvc := service.NewFastingService(fastingRepo, userRepo)
@@ -75,10 +74,12 @@ func main() {
 		<-sigChan
 
 		log.Println("shutting down server...")
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer shutdownCancel()
+		sqlDB, _ := db.DB()
+		if sqlDB != nil {
+			sqlDB.Close()
+		}
 
-		if err := srv.Shutdown(shutdownCtx); err != nil {
+		if err := srv.Close(); err != nil {
 			log.Fatalf("server shutdown failed: %v", err)
 		}
 	}()

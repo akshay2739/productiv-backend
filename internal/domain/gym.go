@@ -34,12 +34,12 @@ func IsValidWorkoutType(wt WorkoutType) bool {
 
 // GymSession represents a single gym workout log.
 type GymSession struct {
-	ID          int64       `json:"id"`
-	UserID      int64       `json:"user_id"`
+	ID          int64       `json:"id" gorm:"primaryKey"`
+	UserID      int64       `json:"user_id" gorm:"index"`
 	WorkoutType WorkoutType `json:"workout_type"`
 	DurationMin *int        `json:"duration_min,omitempty"`
 	EnergyLevel *int        `json:"energy_level,omitempty"`
-	LoggedAt    time.Time   `json:"logged_at"`
+	LoggedAt    time.Time   `json:"logged_at" gorm:"index"`
 	CreatedAt   time.Time   `json:"created_at"`
 }
 

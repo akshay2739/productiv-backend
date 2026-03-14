@@ -14,26 +14,26 @@ const (
 
 // Pillar represents a self-improvement tracking area.
 type Pillar struct {
-	ID           int64      `json:"id"`
-	UserID       int64      `json:"user_id"`
-	Type         PillarType `json:"type"`
+	ID           int64      `json:"id" gorm:"primaryKey"`
+	UserID       int64      `json:"user_id" gorm:"index"`
+	Type         PillarType `json:"type" gorm:"uniqueIndex:idx_user_pillar"`
 	Name         string     `json:"name"`
 	Icon         string     `json:"icon"`
 	Color        string     `json:"color"`
-	IsActive     bool       `json:"is_active"`
-	DisplayOrder int        `json:"display_order"`
+	IsActive     bool       `json:"is_active" gorm:"default:true"`
+	DisplayOrder int        `json:"display_order" gorm:"default:0"`
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at"`
 }
 
 // PillarSummary holds streak data for the dashboard.
 type PillarSummary struct {
-	Type          PillarType `json:"type"`
-	Name          string     `json:"name"`
-	Icon          string     `json:"icon"`
-	Color         string     `json:"color"`
-	CurrentStreak int        `json:"current_streak"`
-	HasActivityToday bool   `json:"has_activity_today"`
+	Type             PillarType `json:"type"`
+	Name             string     `json:"name"`
+	Icon             string     `json:"icon"`
+	Color            string     `json:"color"`
+	CurrentStreak    int        `json:"current_streak"`
+	HasActivityToday bool       `json:"has_activity_today"`
 }
 
 // DashboardData holds the full dashboard response.

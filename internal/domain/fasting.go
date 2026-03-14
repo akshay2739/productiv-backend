@@ -40,12 +40,12 @@ func (f *FastingSession) IsActive() bool {
 
 // FastingStats holds aggregated fasting statistics.
 type FastingStats struct {
-	CurrentStreak   int             `json:"current_streak"`
-	LongestStreak   int             `json:"longest_streak"`
-	AverageDuration float64         `json:"average_duration_hours"`
-	TotalFasts      int             `json:"total_fasts"`
-	CalendarDays    []CalendarDay   `json:"calendar_days"`
-	ActiveSession   *FastingSession `json:"active_session,omitempty"`
+	CurrentStreak   int                  `json:"current_streak"`
+	LongestStreak   int                  `json:"longest_streak"`
+	AverageDuration float64              `json:"average_duration_hours"`
+	TotalFasts      int                  `json:"total_fasts"`
+	CalendarDays    []FastingCalendarDay `json:"calendar_days"`
+	ActiveSession   *FastingSession      `json:"active_session,omitempty"`
 }
 
 // CalendarDay represents a single day in the 14-day calendar view.
@@ -53,4 +53,12 @@ type CalendarDay struct {
 	Date        string `json:"date"`
 	HasActivity bool   `json:"has_activity"`
 	IsToday     bool   `json:"is_today"`
+}
+
+// FastingCalendarDay represents a single day in the fasting month calendar.
+type FastingCalendarDay struct {
+	Date          string   `json:"date"`
+	HasActivity   bool     `json:"has_activity"`
+	IsToday       bool     `json:"is_today"`
+	DurationHours *float64 `json:"duration_hours,omitempty"`
 }

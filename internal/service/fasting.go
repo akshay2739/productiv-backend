@@ -112,27 +112,41 @@ func (s *FastingService) GetStats(ctx context.Context, userID int64) (*domain.Fa
 		return nil, err
 	}
 
-	calendarDays, err := buildCalendarDays(ctx, userID, loc, checker)
+	// Build full month calendar with duration data
+	now := time.Now().In(loc)
+	durations, err := s.repo.GetCompletedDurationsForMonth(ctx, userID, now.Year(), now.Month(), loc)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert calendar days to domain type
-	domainDays := make([]domain.CalendarDay, len(calendarDays))
-	for i, d := range calendarDays {
-		domainDays[i] = domain.CalendarDay{
-			Date:        d.Date,
-			HasActivity: d.HasActivity,
-			IsToday:     d.IsToday,
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
+	monthEnd := monthStart.AddDate(0, 1, 0)
+	totalDays := int(monthEnd.Sub(monthStart).Hours() / 24)
+
+	calendarDays := make([]domain.FastingCalendarDay, totalDays)
+	for i := 0; i < totalDays; i++ {
+		date := monthStart.AddDate(0, 0, i)
+		dateStr := date.Format("2006-01-02")
+		dur, hasFast := durations[dateStr]
+		day := domain.FastingCalendarDay{
+			Date:        dateStr,
+			HasActivity: hasFast,
+			IsToday:     date.Equal(today),
 		}
+		if hasFast {
+			rounded := math.Round(dur*10) / 10
+			day.DurationHours = &rounded
+		}
+		calendarDays[i] = day
 	}
 
 	return &domain.FastingStats{
 		CurrentStreak:   currentStreak,
-		LongestStreak:   currentStreak, // Will improve when we track historical max
+		LongestStreak:   currentStreak,
 		AverageDuration: math.Round(avgDuration*100) / 100,
 		TotalFasts:      totalFasts,
-		CalendarDays:    domainDays,
+		CalendarDays:    calendarDays,
 		ActiveSession:   activeSession,
 	}, nil
 }

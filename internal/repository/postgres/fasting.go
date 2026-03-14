@@ -102,6 +102,29 @@ func (r *FastingRepo) AverageDuration(ctx context.Context, userID int64) (float6
 	return *result.Avg, nil
 }
 
+// GetCompletedDurationsForMonth returns a map of date string -> duration hours for all completed fasts in a month.
+func (r *FastingRepo) GetCompletedDurationsForMonth(ctx context.Context, userID int64, year int, month time.Month, loc *time.Location) (map[string]float64, error) {
+	monthStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
+	monthEnd := monthStart.AddDate(0, 1, 0)
+
+	var sessions []domain.FastingSession
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND end_time IS NOT NULL AND end_time >= ? AND end_time < ?", userID, monthStart, monthEnd).
+		Find(&sessions).Error
+	if err != nil {
+		return nil, fmt.Errorf("getting fasting durations for month: %w", err)
+	}
+
+	result := make(map[string]float64)
+	for _, s := range sessions {
+		if s.EndTime != nil && s.ActualDuration != nil {
+			dateKey := s.EndTime.In(loc).Format("2006-01-02")
+			result[dateKey] = *s.ActualDuration
+		}
+	}
+	return result, nil
+}
+
 // HasCompletedOnDate checks if a completed fast exists on a given date in the user's timezone.
 func (r *FastingRepo) HasCompletedOnDate(ctx context.Context, userID int64, date time.Time) (bool, error) {
 	dayStart := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())

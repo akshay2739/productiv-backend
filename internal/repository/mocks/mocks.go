@@ -80,6 +80,14 @@ func (m *MockFastingRepository) HasCompletedOnDate(ctx context.Context, userID i
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockFastingRepository) GetCompletedDurationsForMonth(ctx context.Context, userID int64, year int, month time.Month, loc *time.Location) (map[string]float64, error) {
+	args := m.Called(ctx, userID, year, month, loc)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]float64), args.Error(1)
+}
+
 // MockGymRepository mocks repository.GymRepository.
 type MockGymRepository struct{ mock.Mock }
 

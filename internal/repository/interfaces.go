@@ -27,6 +27,7 @@ type FastingRepository interface {
 	CountCompleted(ctx context.Context, userID int64) (int, error)
 	AverageDuration(ctx context.Context, userID int64) (float64, error)
 	HasCompletedOnDate(ctx context.Context, userID int64, date time.Time) (bool, error)
+	GetCompletedDurationsForMonth(ctx context.Context, userID int64, year int, month time.Month, loc *time.Location) (map[string]float64, error)
 }
 
 // GymRepository defines data access for gym sessions.

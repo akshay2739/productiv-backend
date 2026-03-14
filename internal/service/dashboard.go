@@ -15,6 +15,7 @@ type DashboardService struct {
 	gymRepo        repository.GymRepository
 	meditationRepo repository.MeditationRepository
 	retentionRepo  repository.RetentionRepository
+	readingRepo    repository.ReadingRepository
 	userRepo       repository.UserRepository
 }
 
@@ -25,6 +26,7 @@ func NewDashboardService(
 	gymRepo repository.GymRepository,
 	meditationRepo repository.MeditationRepository,
 	retentionRepo repository.RetentionRepository,
+	readingRepo repository.ReadingRepository,
 	userRepo repository.UserRepository,
 ) *DashboardService {
 	return &DashboardService{
@@ -33,6 +35,7 @@ func NewDashboardService(
 		gymRepo:        gymRepo,
 		meditationRepo: meditationRepo,
 		retentionRepo:  retentionRepo,
+		readingRepo:    readingRepo,
 		userRepo:       userRepo,
 	}
 }
@@ -136,6 +139,20 @@ func (s *DashboardService) getPillarSummary(ctx context.Context, userID int64, p
 			summary.CurrentStreak = computeDayCount(activeStreak.StartDate, now, loc)
 			summary.HasActivityToday = true // retention is always "active" when tracking
 		}
+
+	case domain.PillarReading:
+		streak, err := calculateCurrentStreak(ctx, userID, loc, func(ctx context.Context, uid int64, date time.Time) (bool, error) {
+			return s.readingRepo.HasLoggedOnDate(ctx, uid, date)
+		})
+		if err != nil {
+			return nil, err
+		}
+		hasToday, err := s.readingRepo.HasLoggedOnDate(ctx, userID, now)
+		if err != nil {
+			return nil, err
+		}
+		summary.CurrentStreak = streak
+		summary.HasActivityToday = hasToday
 	}
 
 	return summary, nil
@@ -161,6 +178,8 @@ func buildTodaysFocus(summaries []domain.PillarSummary, activePillarsToday, tota
 				return "Take a moment to meditate."
 			case domain.PillarRetention:
 				return "Start tracking your retention."
+			case domain.PillarReading:
+				return "Read a few pages today."
 			}
 		}
 	}

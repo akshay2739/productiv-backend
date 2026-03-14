@@ -35,13 +35,15 @@ func main() {
 	gymRepo := postgres.NewGymRepo(db)
 	meditationRepo := postgres.NewMeditationRepo(db)
 	retentionRepo := postgres.NewRetentionRepo(db)
+	readingRepo := postgres.NewReadingRepo(db)
 
 	// Initialize services
 	fastingSvc := service.NewFastingService(fastingRepo, userRepo)
 	gymSvc := service.NewGymService(gymRepo, userRepo)
 	meditationSvc := service.NewMeditationService(meditationRepo, userRepo)
 	retentionSvc := service.NewRetentionService(retentionRepo, userRepo)
-	dashboardSvc := service.NewDashboardService(pillarRepo, fastingRepo, gymRepo, meditationRepo, retentionRepo, userRepo)
+	readingSvc := service.NewReadingService(readingRepo, userRepo)
+	dashboardSvc := service.NewDashboardService(pillarRepo, fastingRepo, gymRepo, meditationRepo, retentionRepo, readingRepo, userRepo)
 
 	// Initialize handlers
 	dashboardHandler := handler.NewDashboardHandler(dashboardSvc)
@@ -49,9 +51,10 @@ func main() {
 	gymHandler := handler.NewGymHandler(gymSvc)
 	meditationHandler := handler.NewMeditationHandler(meditationSvc)
 	retentionHandler := handler.NewRetentionHandler(retentionSvc)
+	readingHandler := handler.NewReadingHandler(readingSvc)
 
 	// Setup router
-	router := handler.NewRouter(dashboardHandler, fastingHandler, gymHandler, meditationHandler, retentionHandler, cfg.CORSOrigin)
+	router := handler.NewRouter(dashboardHandler, fastingHandler, gymHandler, meditationHandler, retentionHandler, readingHandler, cfg.CORSOrigin)
 
 	// Start server
 	srv := &http.Server{

@@ -27,8 +27,10 @@ func newDashboardService() (
 	gymRepo := new(repomocks.MockGymRepository)
 	medRepo := new(repomocks.MockMeditationRepository)
 	retRepo := new(repomocks.MockRetentionRepository)
+	readingRepo := new(repomocks.MockReadingRepository)
 	userRepo := new(repomocks.MockUserRepository)
-	svc := NewDashboardService(pillarRepo, fastingRepo, gymRepo, medRepo, retRepo, userRepo)
+	svc := NewDashboardService(pillarRepo, fastingRepo, gymRepo, medRepo, retRepo, readingRepo, userRepo)
+	_ = readingRepo // used in service but not directly in most tests
 	return svc, pillarRepo, fastingRepo, gymRepo, medRepo, retRepo, userRepo
 }
 

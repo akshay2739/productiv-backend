@@ -113,6 +113,25 @@ func (m *MockRetentionService) GetStats(ctx context.Context, userID int64) (*dom
 	return args.Get(0).(*domain.RetentionStats), args.Error(1)
 }
 
+// MockReadingService mocks service.ReadingServiceInterface.
+type MockReadingService struct{ mock.Mock }
+
+func (m *MockReadingService) LogReading(ctx context.Context, userID int64, req service.LogReadingRequest) (*domain.ReadingSession, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.ReadingSession), args.Error(1)
+}
+
+func (m *MockReadingService) GetStats(ctx context.Context, userID int64) (*domain.ReadingStats, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.ReadingStats), args.Error(1)
+}
+
 // MockDashboardService mocks service.DashboardServiceInterface.
 type MockDashboardService struct{ mock.Mock }
 

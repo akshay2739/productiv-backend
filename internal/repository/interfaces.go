@@ -51,6 +51,15 @@ type MeditationRepository interface {
 	HasCompletedOnDate(ctx context.Context, userID int64, date time.Time) (bool, error)
 }
 
+// ReadingRepository defines data access for reading sessions.
+type ReadingRepository interface {
+	Create(ctx context.Context, session *domain.ReadingSession) error
+	HasLoggedOnDate(ctx context.Context, userID int64, date time.Time) (bool, error)
+	TotalPages(ctx context.Context, userID int64) (int, error)
+	CountCompleted(ctx context.Context, userID int64) (int, error)
+	GetBookSummaries(ctx context.Context, userID int64) ([]domain.BookSummary, error)
+}
+
 // RetentionRepository defines data access for retention streaks.
 type RetentionRepository interface {
 	Create(ctx context.Context, streak *domain.RetentionStreak) error

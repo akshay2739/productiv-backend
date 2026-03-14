@@ -34,6 +34,12 @@ type RetentionServiceInterface interface {
 	GetStats(ctx context.Context, userID int64) (*domain.RetentionStats, error)
 }
 
+// ReadingServiceInterface defines the reading business operations.
+type ReadingServiceInterface interface {
+	LogReading(ctx context.Context, userID int64, req LogReadingRequest) (*domain.ReadingSession, error)
+	GetStats(ctx context.Context, userID int64) (*domain.ReadingStats, error)
+}
+
 // DashboardServiceInterface defines the dashboard business operations.
 type DashboardServiceInterface interface {
 	GetDashboard(ctx context.Context, userID int64) (*domain.DashboardData, error)

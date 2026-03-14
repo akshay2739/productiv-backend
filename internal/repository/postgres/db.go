@@ -38,6 +38,7 @@ func runMigrations(db *gorm.DB) error {
 		&domain.GymSession{},
 		&domain.MeditationSession{},
 		&domain.RetentionStreak{},
+		&domain.ReadingSession{},
 	)
 }
 
@@ -62,6 +63,7 @@ func Seed(db *gorm.DB) error {
 		{UserID: user.ID, Type: domain.PillarGym, Name: "Gym", Icon: "💪", Color: "#4a9eff", IsActive: true, DisplayOrder: 2},
 		{UserID: user.ID, Type: domain.PillarMeditation, Name: "Meditation", Icon: "🧘", Color: "#9b59b6", IsActive: true, DisplayOrder: 3},
 		{UserID: user.ID, Type: domain.PillarRetention, Name: "Retention", Icon: "🔥", Color: "#2ecc71", IsActive: true, DisplayOrder: 4},
+		{UserID: user.ID, Type: domain.PillarReading, Name: "Reading", Icon: "📚", Color: "#f39c12", IsActive: true, DisplayOrder: 5},
 	}
 	if err := db.Create(&pillars).Error; err != nil {
 		return fmt.Errorf("seeding pillars: %w", err)
@@ -92,6 +94,9 @@ func seedDummyData(db *gorm.DB, userID int64) error {
 		return err
 	}
 	if err := seedRetentionStreaks(db, userID, rng, startDate, now); err != nil {
+		return err
+	}
+	if err := seedReadingSessions(db, userID, rng, startDate, now); err != nil {
 		return err
 	}
 	return nil
@@ -324,6 +329,55 @@ func seedRetentionStreaks(db *gorm.DB, userID int64, rng *rand.Rand, start, end 
 
 	if len(streaks) > 0 {
 		return db.CreateInBatches(&streaks, 50).Error
+	}
+	return nil
+}
+
+func seedReadingSessions(db *gorm.DB, userID int64, rng *rand.Rand, start, end time.Time) error {
+	books := []string{
+		"Atomic Habits",
+		"Deep Work",
+		"The 4-Hour Workweek",
+		"Meditations",
+		"Can't Hurt Me",
+	}
+
+	var sessions []domain.ReadingSession
+	current := start
+	currentBook := 0
+
+	for current.Before(end.Add(-24 * time.Hour)) {
+		// ~60% chance of reading on any given day
+		if rng.Float64() > 0.60 {
+			current = current.Add(24 * time.Hour)
+			continue
+		}
+
+		pages := 10 + rng.Intn(40) // 10-49 pages
+		readHour := 6 + rng.Intn(3) // morning 6-8am or evening
+		if rng.Float64() > 0.5 {
+			readHour = 20 + rng.Intn(3) // 8-10pm
+		}
+		loggedAt := time.Date(current.Year(), current.Month(), current.Day(), readHour, rng.Intn(60), 0, 0, time.UTC)
+
+		sessions = append(sessions, domain.ReadingSession{
+			UserID:    userID,
+			BookName:  books[currentBook],
+			Pages:     pages,
+			LoggedAt:  loggedAt,
+			CreatedAt: loggedAt,
+		})
+
+		// Switch books every ~15-25 sessions
+		if len(sessions)%(15+rng.Intn(10)) == 0 {
+			currentBook = (currentBook + 1) % len(books)
+		}
+
+		current = current.Add(24 * time.Hour)
+	}
+
+	if len(sessions) > 0 {
+		return db.CreateInBatches(&sessions, 50).Error
 	}
 	return nil
 }

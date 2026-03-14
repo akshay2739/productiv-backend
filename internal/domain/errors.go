@@ -15,4 +15,6 @@ var (
 	ErrInvalidDuration     = errors.New("invalid duration option")
 	ErrInvalidMoodValue    = errors.New("mood value must be between 1 and 5")
 	ErrInvalidEnergyLevel  = errors.New("energy level must be between 1 and 5")
+	ErrInvalidBookName     = errors.New("book name is required")
+	ErrInvalidPageCount    = errors.New("pages must be between 1 and 1000")
 )

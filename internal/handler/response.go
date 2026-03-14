@@ -40,7 +40,9 @@ func HandleError(w http.ResponseWriter, err error) {
 	case errors.Is(err, domain.ErrInvalidWorkoutType),
 		errors.Is(err, domain.ErrInvalidDuration),
 		errors.Is(err, domain.ErrInvalidMoodValue),
-		errors.Is(err, domain.ErrInvalidEnergyLevel):
+		errors.Is(err, domain.ErrInvalidEnergyLevel),
+		errors.Is(err, domain.ErrInvalidBookName),
+		errors.Is(err, domain.ErrInvalidPageCount):
 		JSON(w, http.StatusUnprocessableEntity, ErrorResponse{Error: "validation_error", Message: err.Error()})
 	default:
 		JSON(w, http.StatusInternalServerError, ErrorResponse{Error: "internal_error", Message: "An unexpected error occurred"})

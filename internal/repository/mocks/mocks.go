@@ -165,6 +165,36 @@ func (m *MockMeditationRepository) HasCompletedOnDate(ctx context.Context, userI
 	return args.Bool(0), args.Error(1)
 }
 
+// MockReadingRepository mocks repository.ReadingRepository.
+type MockReadingRepository struct{ mock.Mock }
+
+func (m *MockReadingRepository) Create(ctx context.Context, session *domain.ReadingSession) error {
+	return m.Called(ctx, session).Error(0)
+}
+
+func (m *MockReadingRepository) HasLoggedOnDate(ctx context.Context, userID int64, date time.Time) (bool, error) {
+	args := m.Called(ctx, userID, date)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockReadingRepository) TotalPages(ctx context.Context, userID int64) (int, error) {
+	args := m.Called(ctx, userID)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockReadingRepository) CountCompleted(ctx context.Context, userID int64) (int, error) {
+	args := m.Called(ctx, userID)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockReadingRepository) GetBookSummaries(ctx context.Context, userID int64) ([]domain.BookSummary, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.BookSummary), args.Error(1)
+}
+
 // MockRetentionRepository mocks repository.RetentionRepository.
 type MockRetentionRepository struct{ mock.Mock }
 

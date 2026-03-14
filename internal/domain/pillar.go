@@ -10,6 +10,7 @@ const (
 	PillarGym        PillarType = "gym"
 	PillarMeditation PillarType = "meditation"
 	PillarRetention  PillarType = "retention"
+	PillarReading    PillarType = "reading"
 )
 
 // Pillar represents a self-improvement tracking area.

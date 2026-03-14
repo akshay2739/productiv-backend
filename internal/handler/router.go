@@ -14,6 +14,7 @@ func NewRouter(
 	gym *GymHandler,
 	meditation *MeditationHandler,
 	retention *RetentionHandler,
+	reading *ReadingHandler,
 	corsOrigin string,
 ) *chi.Mux {
 	r := chi.NewRouter()
@@ -52,6 +53,12 @@ func NewRouter(
 			r.Get("/stats", retention.GetStats)
 			r.Post("/start", retention.StartTracking)
 			r.Post("/reset", retention.ResetCounter)
+		})
+
+		// Reading
+		r.Route("/reading", func(r chi.Router) {
+			r.Get("/stats", reading.GetStats)
+			r.Post("/log", reading.LogReading)
 		})
 	})
 

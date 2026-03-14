@@ -9,11 +9,11 @@ import (
 
 // RetentionHandler handles retention HTTP requests.
 type RetentionHandler struct {
-	svc *service.RetentionService
+	svc service.RetentionServiceInterface
 }
 
 // NewRetentionHandler creates a new RetentionHandler.
-func NewRetentionHandler(svc *service.RetentionService) *RetentionHandler {
+func NewRetentionHandler(svc service.RetentionServiceInterface) *RetentionHandler {
 	return &RetentionHandler{svc: svc}
 }
 

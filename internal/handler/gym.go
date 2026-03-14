@@ -9,11 +9,11 @@ import (
 
 // GymHandler handles gym HTTP requests.
 type GymHandler struct {
-	svc *service.GymService
+	svc service.GymServiceInterface
 }
 
 // NewGymHandler creates a new GymHandler.
-func NewGymHandler(svc *service.GymService) *GymHandler {
+func NewGymHandler(svc service.GymServiceInterface) *GymHandler {
 	return &GymHandler{svc: svc}
 }
 

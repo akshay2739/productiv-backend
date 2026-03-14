@@ -9,11 +9,11 @@ import (
 
 // MeditationHandler handles meditation HTTP requests.
 type MeditationHandler struct {
-	svc *service.MeditationService
+	svc service.MeditationServiceInterface
 }
 
 // NewMeditationHandler creates a new MeditationHandler.
-func NewMeditationHandler(svc *service.MeditationService) *MeditationHandler {
+func NewMeditationHandler(svc service.MeditationServiceInterface) *MeditationHandler {
 	return &MeditationHandler{svc: svc}
 }
 

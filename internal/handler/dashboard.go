@@ -9,11 +9,11 @@ import (
 
 // DashboardHandler handles dashboard HTTP requests.
 type DashboardHandler struct {
-	svc *service.DashboardService
+	svc service.DashboardServiceInterface
 }
 
 // NewDashboardHandler creates a new DashboardHandler.
-func NewDashboardHandler(svc *service.DashboardService) *DashboardHandler {
+func NewDashboardHandler(svc service.DashboardServiceInterface) *DashboardHandler {
 	return &DashboardHandler{svc: svc}
 }
 

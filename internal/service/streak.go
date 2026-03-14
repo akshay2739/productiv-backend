@@ -41,8 +41,9 @@ func calculateStreak(ctx context.Context, userID int64, loc *time.Location, chec
 		checkDate = checkDate.AddDate(0, 0, -1)
 	}
 
-	// Continue walking backward
-	for {
+	// Continue walking backward (max 365 days to prevent unbounded lookback)
+	const maxLookback = 365
+	for i := 0; i < maxLookback; i++ {
 		has, err := checker(ctx, userID, checkDate)
 		if err != nil {
 			return 0, 0, err

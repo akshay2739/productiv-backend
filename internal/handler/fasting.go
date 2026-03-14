@@ -9,11 +9,11 @@ import (
 
 // FastingHandler handles fasting HTTP requests.
 type FastingHandler struct {
-	svc *service.FastingService
+	svc service.FastingServiceInterface
 }
 
 // NewFastingHandler creates a new FastingHandler.
-func NewFastingHandler(svc *service.FastingService) *FastingHandler {
+func NewFastingHandler(svc service.FastingServiceInterface) *FastingHandler {
 	return &FastingHandler{svc: svc}
 }
 
